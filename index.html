@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evolución de la Administración · Miguel Armas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+:root{
+  --bg:#E8EAE3; --surface:#F7F8F4; --ink:#15222B; --muted:#56646D; --line:#C6CBC0;
+  --accent:#2447D6; --accent-ink:#fff; --signal:#D99A00; --ok:#1F7A4D; --bad:#B3321F;
+  --display:'Bricolage Grotesque','Segoe UI',system-ui,sans-serif;
+  --text:'Newsreader',Georgia,'Times New Roman',serif;
+}
+:root[data-theme="dark"]{
+  --bg:#10181D; --surface:#172228; --ink:#E7ECE6; --muted:#97A5AC; --line:#2B3A41;
+  --accent:#8AA0FF; --accent-ink:#0B1030; --signal:#F2B705; --ok:#5CC48F; --bad:#FF8A78;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:84px}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--text);font-size:1.075rem;line-height:1.6}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1040px;margin:0 auto;padding:0 20px}
+
+/* Top bar */
+.top{position:sticky;top:0;z-index:30;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.top-in{display:flex;align-items:center;gap:12px;padding:10px 20px;max-width:1040px;margin:0 auto;flex-wrap:wrap}
+.brand{font-family:var(--display);font-weight:800;font-size:1.05rem;letter-spacing:-.01em;margin-right:auto}
+.search{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:6px 14px;min-width:220px}
+.search input{border:0;background:none;outline:none;width:100%;font-family:var(--display);font-size:.9rem}
+.search:focus-within{border-color:var(--accent)}
+.tbtn{font-family:var(--display);font-weight:500;font-size:.85rem;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:6px 14px}
+.tbtn:hover{border-color:var(--accent)}
+.tbtn[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.scrollbar{height:3px;background:transparent}
+.scrollbar i{display:block;height:100%;width:0;background:var(--accent)}
+
+/* Hero */
+.hero{padding:56px 0 28px}
+.hero h1{font-family:var(--display);font-weight:800;font-size:clamp(2.4rem,7vw,4.6rem);line-height:.98;letter-spacing:-.035em;margin:0 0 18px;max-width:14ch}
+.lede{max-width:52ch;color:var(--muted);font-size:1.2rem;margin:0 0 28px}
+.id{display:flex;flex-wrap:wrap;gap:6px 36px;margin:0 0 40px;padding:14px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.id div{display:flex;flex-direction:column}
+.id dt{font-family:var(--display);font-size:.78rem;color:var(--muted)}
+.id dd{margin:0;font-family:var(--display);font-weight:700;font-size:1.05rem}
+
+/* Track */
+.track-label{font-family:var(--display);font-size:.9rem;color:var(--muted);margin:0 0 14px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.track{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(6,1fr);position:relative}
+.track::before,.track::after{content:"";position:absolute;left:calc(100%/12);height:3px;top:13px;border-radius:2px}
+.track::before{right:calc(100%/12);background:var(--line)}
+.track::after{background:var(--accent);width:calc((100% - 100%/6) * var(--fill,0));transition:width .5s ease}
+.track li{display:flex;justify-content:center}
+.node{position:relative;z-index:1;background:none;border:0;display:flex;flex-direction:column;align-items:center;gap:8px;padding:0 4px;max-width:150px}
+.dot{width:28px;height:28px;border-radius:50%;background:var(--bg);border:3px solid var(--line);display:grid;place-items:center;font-size:.7rem;transition:.2s}
+.node:hover .dot{border-color:var(--accent);transform:scale(1.12)}
+.node.seen .dot{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.node.here .dot{box-shadow:0 0 0 5px color-mix(in srgb,var(--accent) 25%,transparent);border-color:var(--accent)}
+.node b{font-family:var(--display);font-size:.95rem;line-height:1}
+.node span{font-family:var(--display);font-size:.78rem;color:var(--muted);text-align:center;line-height:1.2}
+
+/* Cards */
+.list{padding:36px 0 24px}
+.count{font-family:var(--display);font-size:.9rem;color:var(--muted);margin:0 0 14px}
+.card{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--accent);border-radius:6px;margin-bottom:14px;transition:border-color .3s}
+.card.seen{border-left-color:var(--signal)}
+.card[hidden]{display:none}
+.head{display:grid;grid-template-columns:auto 1fr auto;gap:18px;align-items:center;width:100%;text-align:left;background:none;border:0;padding:18px 20px}
+.year{font-family:var(--display);font-weight:800;font-size:clamp(1.5rem,4vw,2.3rem);letter-spacing:-.03em;color:var(--accent);min-width:4.4ch;line-height:1}
+.ttl small{display:block;font-family:var(--display);font-size:.82rem;color:var(--muted)}
+.ttl h2{font-family:var(--display);font-weight:700;font-size:clamp(1.05rem,2.6vw,1.35rem);line-height:1.2;margin:2px 0 0;letter-spacing:-.01em}
+.chev{transition:transform .25s;color:var(--muted)}
+.card.open .chev{transform:rotate(180deg)}
+.body{display:grid;grid-template-rows:0fr;transition:grid-template-rows .32s ease}
+.card.open .body{grid-template-rows:1fr}
+.body>.inner{overflow:hidden}
+.cols{display:grid;grid-template-columns:200px 1fr;gap:26px;padding:4px 20px 22px}
+.glyph{border-right:1px solid var(--line);padding-right:22px;display:flex;flex-direction:column;gap:10px;align-items:flex-start}
+.glyph .ic{width:56px;height:56px;border-radius:12px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-size:1.5rem;transition:transform .3s}
+.card.open .glyph .ic{transform:rotate(-6deg)}
+.glyph strong{font-family:var(--display);font-size:1.05rem;line-height:1.1}
+.glyph span{font-family:var(--display);font-size:.82rem;color:var(--muted)}
+.main h3{font-family:var(--display);font-weight:700;font-size:1.3rem;line-height:1.2;margin:0 0 8px;letter-spacing:-.01em}
+.main p{margin:0 0 18px;max-width:62ch}
+.meter-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+.meter-row label{font-family:var(--display);font-size:.85rem;font-weight:500}
+.meter{display:flex;gap:3px}
+.meter i{width:16px;height:18px;border-radius:2px;background:var(--line);transition:background .25s}
+.card.open .meter i.on{background:var(--accent);transition-delay:calc(var(--n) * 45ms)}
+.meter-row output{font-family:var(--display);font-weight:700;font-size:.85rem;color:var(--muted)}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn{font-family:var(--display);font-weight:500;font-size:.88rem;background:transparent;border:1px solid var(--ink);border-radius:6px;padding:7px 14px;display:inline-flex;gap:8px;align-items:center}
+.btn:hover{background:var(--ink);color:var(--bg)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{filter:brightness(1.1);background:var(--accent);color:var(--accent-ink)}
+.btn[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.reflect{display:grid;grid-template-rows:0fr;transition:grid-template-rows .3s ease}
+.reflect.show{grid-template-rows:1fr}
+.reflect>div{overflow:hidden}
+.reflect blockquote{margin:16px 0 0;padding:14px 18px;border-left:3px solid var(--signal);background:color-mix(in srgb,var(--signal) 10%,transparent);font-style:italic;font-size:1.1rem}
+.reflect blockquote cite{display:block;font-style:normal;font-family:var(--display);font-size:.8rem;color:var(--muted);margin-bottom:4px}
+.empty{padding:28px;border:1px dashed var(--line);border-radius:6px;font-family:var(--display);color:var(--muted);text-align:center}
+
+/* Compare bar & dialog */
+.cmpbar{position:fixed;left:50%;bottom:18px;transform:translate(-50%,140%);background:var(--ink);color:var(--bg);border-radius:999px;padding:8px 10px 8px 20px;display:flex;gap:14px;align-items:center;font-family:var(--display);font-size:.9rem;z-index:40;transition:transform .3s;max-width:calc(100% - 24px)}
+.cmpbar.show{transform:translate(-50%,0)}
+.cmpbar button{background:var(--bg);color:var(--ink);border:0;border-radius:999px;padding:6px 14px;font-family:var(--display);font-weight:700}
+.cmpbar button:disabled{opacity:.4;cursor:not-allowed}
+dialog{border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);width:min(880px,calc(100% - 24px));padding:0;max-height:88vh}
+dialog::backdrop{background:rgba(10,16,20,.6)}
+.dl-head{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--line)}
+.dl-head h2{font-family:var(--display);font-size:1.2rem;margin:0}
+.x{background:none;border:1px solid var(--line);border-radius:6px;width:34px;height:34px}
+.cmp{display:grid;grid-template-columns:130px 1fr 1fr;font-size:.98rem}
+.cmp>div{padding:12px 16px;border-bottom:1px solid var(--line)}
+.cmp .k{font-family:var(--display);font-size:.82rem;color:var(--muted)}
+.cmp .h{font-family:var(--display);font-weight:800;font-size:1.05rem;color:var(--accent)}
+.cmp .meter i{width:11px}
+.cmp .meter i.on{background:var(--accent)}
+
+/* Quiz */
+.quiz{padding:30px 0 56px}
+.quiz-box{background:var(--ink);color:var(--bg);border-radius:10px;padding:28px clamp(18px,4vw,36px)}
+.quiz-box h2{font-family:var(--display);font-weight:800;font-size:clamp(1.5rem,4vw,2.2rem);letter-spacing:-.02em;line-height:1.05;margin:0 0 6px}
+.quiz-box p.sub{margin:0 0 22px;opacity:.75}
+.qmeta{font-family:var(--display);font-size:.85rem;opacity:.75;display:flex;justify-content:space-between;margin-bottom:10px}
+.qbar{height:4px;background:color-mix(in srgb,var(--bg) 25%,transparent);border-radius:2px;margin-bottom:20px}
+.qbar i{display:block;height:100%;background:var(--signal);border-radius:2px;width:0;transition:width .4s}
+.q{font-size:1.25rem;line-height:1.35;margin:0 0 16px;min-height:3.4em}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.opt{text-align:left;font-family:var(--display);font-weight:500;background:transparent;color:var(--bg);border:1px solid color-mix(in srgb,var(--bg) 40%,transparent);border-radius:8px;padding:12px 14px}
+.opt:hover:not(:disabled){border-color:var(--bg);background:color-mix(in srgb,var(--bg) 10%,transparent)}
+.opt.good{background:var(--ok);border-color:var(--ok);color:#fff}
+.opt.bad{background:var(--bad);border-color:var(--bad);color:#fff}
+.opt:disabled{cursor:default}
+.fb{min-height:3em;margin:16px 0 8px;font-size:1rem}
+.quiz-box .btn{border-color:var(--bg);color:var(--bg)}
+.quiz-box .btn:hover{background:var(--bg);color:var(--ink)}
+.score{font-family:var(--display);font-weight:800;font-size:3rem;line-height:1}
+
+footer{border-top:1px solid var(--line);padding:22px 0 90px;font-family:var(--display);font-size:.85rem;color:var(--muted)}
+footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+kbd{font-family:var(--display);border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 6px;background:var(--surface);font-size:.8rem}
+.toast{position:fixed;top:78px;right:16px;background:var(--ok);color:#fff;font-family:var(--display);padding:10px 16px;border-radius:8px;opacity:0;transform:translateY(-8px);pointer-events:none;transition:.3s;z-index:50;max-width:280px;font-size:.9rem}
+.toast.show{opacity:1;transform:none}
+
+@media (max-width:720px){
+  .cols{grid-template-columns:1fr}
+  .glyph{border-right:0;border-bottom:1px solid var(--line);padding:0 0 14px;flex-direction:row;align-items:center;flex-wrap:wrap}
+  .opts{grid-template-columns:1fr}
+  .node span{display:none}
+  .track::before,.track::after{top:13px}
+  .search{min-width:0;flex:1 1 100%;order:5}
+  .head{grid-template-columns:1fr auto;gap:8px}
+  .year{grid-column:1/-1}
+  .cmp{grid-template-columns:90px 1fr 1fr;font-size:.9rem}
+  .cmp>div{padding:10px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-in">
+    <div class="brand">Evolución de la Administración</div>
+    <label class="search"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><input id="q" type="search" placeholder="Buscar autor o concepto" aria-label="Buscar autor o concepto" autocomplete="off"></label>
+    <button class="tbtn" id="expand">Expandir todo</button>
+    <button class="tbtn" id="collapse">Colapsar todo</button>
+    <button class="tbtn" id="sound" aria-pressed="false" title="Sonido al interactuar"><i class="fa-solid fa-volume-xmark" id="sound-ic"></i> Sonido</button>
+    <button class="tbtn" id="theme" aria-label="Cambiar entre modo claro y oscuro"><i class="fa-solid fa-moon" id="theme-ic"></i></button>
+  </div>
+  <div class="scrollbar"><i id="sb"></i></div>
+</header>
+
+<main>
+  <section class="hero wrap">
+    <h1>Evolución de la Administración</h1>
+    <p class="lede">Seis enfoques que cambiaron la forma de dirigir organizaciones, de la fábrica taylorista al comportamiento organizacional. Abre cada hito, revela su análisis crítico y ponte a prueba al final.</p>
+    <dl class="id">
+      <div><dt>Estudiante</dt><dd>Miguel Armas</dd></div>
+      <div><dt>C.I.</dt><dd>32.214.453</dd></div>
+      <div><dt>Materia</dt><dd>Sistemas Administrativos</dd></div>
+    </dl>
+    <p class="track-label"><span>Cronología: toca un hito para abrirlo</span><span id="progress-text">0 de 6 revisados</span></p>
+    <ol class="track" id="track" aria-label="Cronología de hitos"></ol>
+  </section>
+
+  <section class="list wrap" id="timeline-section">
+    <p class="count" id="count" aria-live="polite"></p>
+    <div id="list"></div>
+    <div class="empty" id="empty" hidden>No hay hitos que coincidan con tu búsqueda. Prueba con un autor (Taylor, Fayol, Weber) o un concepto (burocracia, motivación).</div>
+  </section>
+
+  <section class="quiz wrap" id="quiz">
+    <div class="quiz-box">
+      <h2>Ponte a prueba</h2>
+      <p class="sub">Seis preguntas, una por hito. Elige la respuesta y te explico por qué.</p>
+      <div id="quiz-body"></div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Evolución de la Administración © UNEFA / Sistemas Administrativos</span>
+    <span>Atajos: <kbd>/</kbd> buscar · <kbd>J</kbd> <kbd>K</kbd> moverse entre hitos</span>
+  </div>
+</footer>
+
+<div class="cmpbar" id="cmpbar" role="status">
+  <span id="cmp-text"></span>
+  <button id="cmp-open" disabled>Ver comparación</button>
+  <button id="cmp-clear" aria-label="Limpiar selección">Limpiar</button>
+</div>
+
+<dialog id="cmp-dialog" aria-labelledby="cmp-title">
+  <div class="dl-head"><h2 id="cmp-title">Comparación</h2><button class="x" id="cmp-close" aria-label="Cerrar"><i class="fa-solid fa-xmark"></i></button></div>
+  <div class="cmp" id="cmp-grid"></div>
+</dialog>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const T = [
+  {year:"c. 1911", era:"Clásica", short:"Taylor", author:"Frederick Taylor", icon:"fa-stopwatch",
+   title:"Escuela Clásica: Frederick Taylor", concept:"Cronómetro", sub:"Tiempos y movimientos",
+   head:"Maximizar eficiencia operativa vía tiempos y movimientos",
+   text:"Basado en el método racional, estandarización de tareas, división extrema del trabajo y estudio científico de tiempos y movimientos para optimizar la producción industrial.",
+   mLabel:"Eficiencia mecánica", m:8,
+   quote:"Límite de tratar al trabajador como extensión de máquina: ignora necesidades humanas, genera alienación y monotonía.",
+   q:"¿Qué escuela busca optimizar la producción con estandarización de tareas y estudio de tiempos y movimientos?",
+   why:"Taylor propuso el método racional y la división extrema del trabajo para maximizar la eficiencia operativa."},
+  {year:"1916", era:"Clásica", short:"Fayol", author:"Henri Fayol", icon:"fa-sitemap",
+   title:"Homo economicus y Teoría de Fayol (Henri Fayol)", concept:"Organigrama", sub:"Estructura global",
+   head:"Estructura global y funciones administrativas",
+   text:"Enfoque anatómico y estructural. Organización de las 6 funciones básicas de la empresa y sistematización del proceso administrativo (Planear, Organizar, Dirigir, Coordinar y Controlar).",
+   mLabel:"Control estructural", m:7,
+   quote:"Visión de Homo economicus vs. trabajador moderno: actual busca propósito y bienestar, no solo incentivos salariales.",
+   q:"¿Quién sistematizó el proceso administrativo en Planear, Organizar, Dirigir, Coordinar y Controlar?",
+   why:"Fayol miró la organización de forma global: organizó 6 funciones básicas de la empresa y sistematizó el proceso administrativo."},
+  {year:"c. 1920", era:"Burocrática", short:"Weber", author:"Max Weber", icon:"fa-book",
+   title:"Principios de Organización y Teoría Burocrática (Weber)", concept:"Normatividad", sub:"Jerarquía y ley",
+   head:"Racionalidad y jerarquía formal",
+   text:"Modelo burocrático basado en la autoridad legal-formal, normas estrictas por escrito, impersonalidad en las relaciones laborales y selección del personal por mérito profesional.",
+   mLabel:"Rigidez burocrática", m:6,
+   quote:"Exceso de burocracia genera ineficiencia y resistencia: normas excesivas ahogan innovación y adaptabilidad.",
+   q:"¿Qué modelo se basa en normas escritas, impersonalidad y selección del personal por mérito?",
+   why:"El modelo burocrático de Weber descansa en la autoridad legal-formal y en reglas estrictas por escrito."},
+  {year:"1924–1932", era:"Humanística", short:"Mayo (Hawthorne)", author:"Elton Mayo", icon:"fa-users",
+   title:"Escuela Humanística: Elton Mayo y Hawthorne", concept:"Grupo social", sub:"Pertenencia",
+   head:"Factor humano y relaciones de grupo",
+   text:"Origen en los experimentos de Hawthorne. Enfoque en la psicología del trabajador, organización informal, liderazgo participativo y dinámicas de grupo.",
+   mLabel:"Impacto psicosocial", m:8,
+   quote:"Experimento de Hawthorne demostró importancia de factores psicológicos: clima social y pertenencia superan incentivos puramente económicos.",
+   q:"¿Qué experimentos demostraron que el clima social y la pertenencia pesan más que los incentivos económicos?",
+   why:"Los experimentos de Hawthorne, de Elton Mayo, dieron origen a la escuela humanística y a la atención a la organización informal."},
+  {year:"1940–1960", era:"Comportamiento", short:"Maslow y McGregor", author:"Maslow y McGregor", icon:"fa-lightbulb",
+   title:"Evolución de la Teoría y Comportamiento Organizacional", concept:"Liderazgo", sub:"Motivación",
+   head:"Teorías de motivación y liderazgo estratégico",
+   text:"Paso hacia el Comportamiento Organizacional (Maslow, McGregor). Integración de teorías de necesidades, estilos de liderazgo estratégicos y flujos formales/informales de comunicación.",
+   mLabel:"Compromiso colectivo", m:8,
+   quote:"Comunicación y liderazgo estratégicos: articulan visión, reducen conflicto y potencian compromiso colectivo.",
+   q:"¿Qué autores integran teorías de necesidades y estilos de liderazgo en el Comportamiento Organizacional?",
+   why:"Maslow y McGregor marcan el paso hacia el Comportamiento Organizacional con teorías de necesidades y de liderazgo."},
+  {year:"1950s", era:"Neoclásica", short:"Neoclásica (Drucker)", author:"Peter Drucker", icon:"fa-gears",
+   title:"Teoría Neoclásica: Proceso Administrativo", concept:"Engranajes", sub:"Descentralización",
+   head:"Flexibilidad y descentralización",
+   text:"Actualización pragmática de la teoría clásica (Drucker). Enfoque en resultados, departamentalización, proceso administrativo dinámico y delegación operativa de decisiones.",
+   mLabel:"Adaptabilidad sistémica", m:9,
+   quote:"Equilibrio de organización formal con descentralización: guía formal por proceso administrativo, delegando decisiones operativas para agilidad.",
+   q:"¿Qué enfoque actualiza la teoría clásica con enfoque en resultados y delegación operativa de decisiones?",
+   why:"La teoría neoclásica (Drucker) actualiza lo clásico con descentralización, departamentalización y proceso administrativo dinámico."}
+];
+
+const $ = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => [...r.querySelectorAll(s)];
+const state = { open:new Set(), seen:new Set(), cmp:[], here:-1 };
+let soundOn = false, actx;
+
+/* Persistencia opcional (si el navegador la permite) */
+try { JSON.parse(localStorage.getItem('adm-seen')||'[]').forEach(i=>state.seen.add(i)); } catch(e){}
+function saveSeen(){ try{ localStorage.setItem('adm-seen', JSON.stringify([...state.seen])); }catch(e){} }
+
+function tick(freq=520){
+  if(!soundOn) return;
+  try{
+    actx = actx || new (window.AudioContext||window.webkitAudioContext)();
+    const o=actx.createOscillator(), g=actx.createGain();
+    o.type='sine'; o.frequency.value=freq;
+    g.gain.setValueAtTime(.06,actx.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+.08);
+    o.connect(g); g.connect(actx.destination); o.start(); o.stop(actx.currentTime+.08);
+  }catch(e){}
+}
+function toast(msg){
+  const t=$('#toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(toast.id); toast.id=setTimeout(()=>t.classList.remove('show'),3200);
+}
+
+/* Render */
+function meterHTML(n){ return Array.from({length:10},(_,i)=>`<i class="${i<n?'on':''}" style="--n:${i}"></i>`).join(''); }
+
+function renderTrack(){
+  $('#track').innerHTML = T.map((t,i)=>`
+    <li><button class="node" data-i="${i}" aria-label="Ir al hito ${i+1}: ${t.short}">
+      <span class="dot"><i class="fa-solid fa-check" style="display:none"></i></span>
+      <b>${t.year}</b><span>${t.short}</span>
+    </button></li>`).join('');
+  $$('.node').forEach(b=>b.addEventListener('click',()=>goTo(+b.dataset.i)));
+}
+
+function renderCards(){
+  $('#list').innerHTML = T.map((t,i)=>`
+  <article class="card" id="card-${i}" data-i="${i}">
+    <button class="head" aria-expanded="false" aria-controls="body-${i}" id="head-${i}">
+      <span class="year">${t.year}</span>
+      <span class="ttl"><small>Hito ${i+1} · ${t.era}</small><h2>${t.title}</h2></span>
+      <i class="fa-solid fa-chevron-down chev" aria-hidden="true"></i>
+    </button>
+    <div class="body" id="body-${i}" role="region" aria-labelledby="head-${i}">
+      <div class="inner">
+        <div class="cols">
+          <div class="glyph">
+            <div class="ic"><i class="fa-solid ${t.icon}"></i></div>
+            <div><strong>${t.concept}</strong><br><span>${t.sub}</span></div>
+          </div>
+          <div class="main">
+            <h3>${t.head}</h3>
+            <p>${t.text}</p>
+            <div class="meter-row">
+              <label>${t.mLabel}</label>
+              <div class="meter" role="img" aria-label="${t.mLabel}: ${t.m} de 10">${meterHTML(t.m)}</div>
+              <output>${t.m}/10</output>
+            </div>
+            <div class="actions">
+              <button class="btn primary" data-act="reflect"><i class="fa-solid fa-brain"></i> <span>Ver análisis crítico</span></button>
+              <button class="btn" data-act="seen" aria-pressed="false"><i class="fa-regular fa-circle-check"></i> <span>Marcar como revisado</span></button>
+              <button class="btn" data-act="cmp" aria-pressed="false"><i class="fa-solid fa-code-compare"></i> <span>Comparar</span></button>
+            </div>
+            <div class="reflect" id="reflect-${i}"><div>
+              <blockquote><cite>Reflexión analítica · pregunta crítica</cite>“${t.quote}”</blockquote>
+            </div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </article>`).join('');
+
+  $$('.card').forEach(card=>{
+    const i=+card.dataset.i;
+    $('.head',card).addEventListener('click',()=>toggleCard(i));
+    $$('[data-act]',card).forEach(b=>b.addEventListener('click',()=>{
+      const a=b.dataset.act;
+      if(a==='reflect') toggleReflect(i);
+      if(a==='seen') toggleSeen(i);
+      if(a==='cmp') toggleCompare(i);
+    }));
+  });
+}
+
+/* Acciones */
+function setOpen(i,open){
+  const card=$('#card-'+i);
+  card.classList.toggle('open',open);
+  $('.head',card).setAttribute('aria-expanded',open);
+  open?state.open.add(i):state.open.delete(i);
+}
+function toggleCard(i){ setOpen(i,!state.open.has(i)); tick(state.open.has(i)?620:420); }
+function goTo(i){
+  const q=$('#q'); if(q.value){ q.value=''; applyFilter(); }
+  setOpen(i,true); tick(660);
+  $('#card-'+i).scrollIntoView({behavior:'smooth',block:'start'});
+}
+function toggleReflect(i){
+  const r=$('#reflect-'+i), btn=$('#card-'+i+' [data-act="reflect"] span');
+  const show=!r.classList.contains('show');
+  r.classList.toggle('show',show);
+  btn.textContent = show?'Ocultar análisis crítico':'Ver análisis crítico';
+  tick(show?700:400);
+  if(show && !state.seen.has(i)) toggleSeen(i,true);
+}
+function toggleSeen(i,force){
+  const on = typeof force==='boolean'?force:!state.seen.has(i);
+  on?state.seen.add(i):state.seen.delete(i);
+  saveSeen(); paintSeen();
+  if(on && state.seen.size===T.length) toast('¡Revisaste los 6 hitos! Ahora prueba el cuestionario.');
+}
+function paintSeen(){
+  T.forEach((_,i)=>{
+    const seen=state.seen.has(i), card=$('#card-'+i);
+    card.classList.toggle('seen',seen);
+    const b=$('[data-act="seen"]',card);
+    b.setAttribute('aria-pressed',seen);
+    $('span',b).textContent = seen?'Revisado':'Marcar como revisado';
+    $('i',b).className = seen?'fa-solid fa-circle-check':'fa-regular fa-circle-check';
+    const n=$$('.node')[i]; n.classList.toggle('seen',seen);
+    $('.dot i',n).style.display = seen?'block':'none';
+  });
+  const c=state.seen.size;
+  $('#progress-text').textContent=`${c} de ${T.length} revisados`;
+  $('#track').style.setProperty('--fill', c/T.length);
+}
+function toggleCompare(i){
+  const k=state.cmp.indexOf(i);
+  if(k>-1) state.cmp.splice(k,1); else { state.cmp.push(i); if(state.cmp.length>2) state.cmp.shift(); }
+  tick(560); paintCompare();
+}
+function paintCompare(){
+  T.forEach((_,i)=>{
+    const on=state.cmp.includes(i), b=$('#card-'+i+' [data-act="cmp"]');
+    b.setAttribute('aria-pressed',on); $('span',b).textContent = on?'En comparación':'Comparar';
+  });
+  const bar=$('#cmpbar'), n=state.cmp.length;
+  bar.classList.toggle('show',n>0);
+  $('#cmp-text').textContent = n===1 ? `${T[state.cmp[0]].short}: elige otro hito` : n===2 ? `${T[state.cmp[0]].short} vs ${T[state.cmp[1]].short}` : '';
+  $('#cmp-open').disabled = n<2;
+}
+function openCompare(){
+  const [a,b]=state.cmp.map(i=>T[i]);
+  const rows=[
+    ['', `<span class="h">${a.short}</span>`, `<span class="h">${b.short}</span>`],
+    ['Época', a.year, b.year],
+    ['Escuela', a.era, b.era],
+    ['Idea central', a.head, b.head],
+    ['Descripción', a.text, b.text],
+    [a.mLabel+' / '+b.mLabel, `<div class="meter">${meterHTML(a.m)}</div><small>${a.mLabel}: ${a.m}/10</small>`, `<div class="meter">${meterHTML(b.m)}</div><small>${b.mLabel}: ${b.m}/10</small>`],
+    ['Reflexión crítica', `“${a.quote}”`, `“${b.quote}”`]
+  ];
+  $('#cmp-grid').innerHTML = rows.map(r=>`<div class="k">${r[0]}</div><div>${r[1]}</div><div>${r[2]}</div>`).join('');
+  $('#cmp-dialog').showModal(); tick(600);
+}
+
+/* Búsqueda */
+function applyFilter(){
+  const q=$('#q').value.trim().toLowerCase();
+  let shown=0;
+  T.forEach((t,i)=>{
+    const hay=[t.title,t.author,t.era,t.concept,t.sub,t.head,t.text,t.quote,t.year].join(' ').toLowerCase();
+    const ok=!q||hay.includes(q);
+    $('#card-'+i).hidden=!ok; if(ok) shown++;
+  });
+  $('#empty').hidden = shown>0;
+  $('#count').textContent = q ? `${shown} de ${T.length} hitos coinciden con “${$('#q').value.trim()}”` : `${T.length} hitos, de más antiguo a más reciente`;
+}
+
+/* Cuestionario */
+const quiz={i:0,score:0,answered:false,order:[]};
+function shuffle(a){ for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+function startQuiz(){ quiz.i=0; quiz.score=0; quiz.order=shuffle(T.map((_,i)=>i)); renderQ(); }
+function renderQ(){
+  const body=$('#quiz-body');
+  if(quiz.i>=T.length){
+    const pct=quiz.score/T.length;
+    const msg = pct===1?'Dominas la evolución de la administración.':pct>=.66?'Muy buen resultado. Repasa los hitos que fallaste.':'Abre los hitos y revisa su análisis crítico, luego inténtalo otra vez.';
+    body.innerHTML=`<div class="score">${quiz.score}/${T.length}</div><p class="fb">${msg}</p>
+      <div class="actions"><button class="btn" id="retry"><i class="fa-solid fa-rotate-right"></i> Intentar de nuevo</button></div>`;
+    $('#retry').addEventListener('click',startQuiz);
+    if(pct===1) toast('¡Puntaje perfecto!');
+    return;
+  }
+  const idx=quiz.order[quiz.i], t=T[idx];
+  const distract=shuffle(T.map((_,k)=>k).filter(k=>k!==idx)).slice(0,3);
+  const opts=shuffle([idx,...distract]);
+  quiz.answered=false;
+  body.innerHTML=`
+    <div class="qmeta"><span>Pregunta ${quiz.i+1} de ${T.length}</span><span>Aciertos: ${quiz.score}</span></div>
+    <div class="qbar"><i style="width:${quiz.i/T.length*100}%"></i></div>
+    <p class="q">${t.q}</p>
+    <div class="opts">${opts.map(k=>`<button class="opt" data-k="${k}">${T[k].short}</button>`).join('')}</div>
+    <p class="fb" id="fb" aria-live="polite"></p>
+    <div class="actions"><button class="btn" id="next" hidden>${quiz.i===T.length-1?'Ver resultado':'Siguiente pregunta'}</button></div>`;
+  $$('.opt').forEach(b=>b.addEventListener('click',()=>answer(b,idx)));
+  $('#next').addEventListener('click',()=>{quiz.i++;renderQ();});
+  requestAnimationFrame(()=>{ const bar=$('.qbar i'); if(bar) bar.style.width=(quiz.i/T.length*100)+'%'; });
+}
+function answer(btn,correct){
+  if(quiz.answered) return; quiz.answered=true;
+  const k=+btn.dataset.k, ok=k===correct;
+  if(ok) quiz.score++;
+  $$('.opt').forEach(o=>{ o.disabled=true; if(+o.dataset.k===correct) o.classList.add('good'); });
+  if(!ok) btn.classList.add('bad');
+  $('#fb').textContent=(ok?'Correcto. ':'No exactamente. ')+T[correct].why;
+  $('#next').hidden=false; $('#next').focus();
+  tick(ok?780:260);
+}
+
+/* Barra de scroll + hito actual */
+function onScroll(){
+  const h=document.documentElement;
+  $('#sb').style.width = (h.scrollTop/(h.scrollHeight-h.clientHeight||1)*100)+'%';
+}
+function observe(){
+  const io=new IntersectionObserver(es=>{
+    es.forEach(e=>{ if(e.isIntersecting){ state.here=+e.target.dataset.i; $$('.node').forEach((n,i)=>n.classList.toggle('here',i===state.here)); } });
+  },{rootMargin:'-30% 0px -60% 0px'});
+  $$('.card').forEach(c=>io.observe(c));
+}
+
+/* Eventos globales */
+$('#expand').addEventListener('click',()=>{ T.forEach((_,i)=>setOpen(i,true)); tick(660); });
+$('#collapse').addEventListener('click',()=>{ T.forEach((_,i)=>setOpen(i,false)); tick(420); });
+$('#sound').addEventListener('click',e=>{
+  soundOn=!soundOn; e.currentTarget.setAttribute('aria-pressed',soundOn);
+  $('#sound-ic').className = soundOn?'fa-solid fa-volume-high':'fa-solid fa-volume-xmark'; tick(600);
+});
+$('#theme').addEventListener('click',()=>{
+  const d=document.documentElement, dark=d.dataset.theme!=='dark';
+  d.dataset.theme=dark?'dark':'light';
+  $('#theme-ic').className = dark?'fa-solid fa-sun':'fa-solid fa-moon';
+});
+$('#q').addEventListener('input',applyFilter);
+$('#cmp-open').addEventListener('click',openCompare);
+$('#cmp-clear').addEventListener('click',()=>{ state.cmp=[]; paintCompare(); });
+$('#cmp-close').addEventListener('click',()=>$('#cmp-dialog').close());
+$('#cmp-dialog').addEventListener('click',e=>{ if(e.target===e.currentTarget) e.currentTarget.close(); });
+window.addEventListener('scroll',onScroll,{passive:true});
+document.addEventListener('keydown',e=>{
+  const typing=/INPUT|TEXTAREA/.test(document.activeElement.tagName);
+  if(e.key==='/' && !typing){ e.preventDefault(); $('#q').focus(); return; }
+  if(typing || e.metaKey || e.ctrlKey || e.altKey) return;
+  if(e.key==='j'||e.key==='k'){
+    const vis=T.map((_,i)=>i).filter(i=>!$('#card-'+i).hidden);
+    if(!vis.length) return;
+    const cur=vis.indexOf(state.here);
+    const next=e.key==='j'?Math.min(vis.length-1,cur+1):Math.max(0,cur<0?0:cur-1);
+    $('#card-'+vis[next]).scrollIntoView({behavior:'smooth',block:'start'});
+    $('#head-'+vis[next]).focus({preventScroll:true});
+  }
+});
+if(window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches){
+  document.documentElement.dataset.theme='dark'; $('#theme-ic').className='fa-solid fa-sun';
+}
+
+/* Inicio */
+renderTrack(); renderCards(); paintSeen(); paintCompare(); applyFilter(); observe(); startQuiz(); onScroll();
+</script>
+</body>
+</html>
